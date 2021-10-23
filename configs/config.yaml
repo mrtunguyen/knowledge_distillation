@@ -1,0 +1,8 @@
+
+defaults:
+  - model: default
+  - data: default
+  - training: default
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+default_root_dir: 'experiments'

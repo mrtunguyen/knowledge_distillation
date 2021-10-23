@@ -1,0 +1,7 @@
+max_epochs: 20
+lr: 0.01
+log_every_n_steps: 10
+deterministic: true
+limit_train_batches: 0.5
+limit_val_batches: 1.0
+checkpoint_folder: './models'

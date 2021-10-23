@@ -1,0 +1,5 @@
+name: CIFAR10
+num_classes: 10
+path: 'data_storage'
+batch_size: 64
+download: false
