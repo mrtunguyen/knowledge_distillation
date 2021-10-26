@@ -30,6 +30,4 @@ class DistillLoss(nn.Module):
         total_loss = (soft_target_loss * self.distillation_weight + 
                     hard_target_loss * (1 - self.distillation_weight))
 
-        return soft_target_loss.item(), hard_target_loss.item(), total_loss.item()
-
-        
+        return soft_target_loss, hard_target_loss, total_loss

@@ -11,6 +11,7 @@ outputs/
 multirun/
 mlruns/
 data_storage/
+experiment/
 
 .Python
 build/

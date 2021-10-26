@@ -96,6 +96,7 @@ class DistillTrainingModule(TeacherTrainingModule):
                 temperature=0.6, distillation_weight=0.5,
                 lr=0.01, num_classes=10):
         super(DistillTrainingModule, self).__init__(lr=lr, num_classes=num_classes)
+        self.save_hyperparameters()
         self.teacher_model = teacher_model
         self.teacher_model.eval()
         for param in self.teacher_model.parameters():
@@ -118,9 +119,9 @@ class DistillTrainingModule(TeacherTrainingModule):
 
         train_accuracy = self.train_accuracy_metric(preds, labels)
 
-        self.log('distill_train/total_loss', loss, prog_bar=True, on_epoch=True)
-        self.log('distill_train/soft_loss', soft_target_loss, prog_bar=True, on_epoch=True)
-        self.log('distill_train/hard_loss', hard_target_loss, prog_bar=True, on_epoch=True)
+        self.log('distill_train/total_loss', loss.item(), prog_bar=True, on_epoch=True)
+        self.log('distill_train/soft_loss', soft_target_loss.item(), prog_bar=True, on_epoch=True)
+        self.log('distill_train/hard_loss', hard_target_loss.item(), prog_bar=True, on_epoch=True)
         self.log('distill_train/acc', train_accuracy, prog_bar=True, on_epoch=True)
         return loss
 

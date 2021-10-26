@@ -23,27 +23,28 @@ class SamplesVisualisationLogger(pl.Callback):
 
         self.datamodule = datamodule
 
-    def on_train_start(self, trainer, pl_module):
-        data_split_at = wandb.Artifact("data_split", type='balanced_data')
-        preview_data_table = wandb.Table(columns=['image', 'label', 'split'])
-        split_data = {
-            'train' : self.datamodule.train_dataset, 
-            'valid' : self.datamodule.val_dataset
-        }
-        index = 0
-        for split, dataset in split_data.items():
-            for image, label in zip(dataset.data, dataset.targets):
-                data_split_at.add(
-                    wandb.Image(image), 
-                    name=os.path.join(split, dataset.classes[label], f"{index}.jpg")
-                    )
-                preview_data_table.add_data(
-                    wandb.Image(image), 
-                    dataset.classes[label], 
-                    split)
-                index += 1
-        data_split_at.add(preview_data_table, 'data_split')
-        trainer.logger.experiment.log_artifact(data_split_at)
+    # def on_train_start(self, trainer, pl_module):
+    #     data_split_at = wandb.Artifact("data_split", type='balanced_data')
+    #     preview_data_table = wandb.Table(columns=['image', 'label', 'split'])
+    #     split_data = {
+    #         'train' : self.datamodule.train_dataset, 
+    #         'valid' : self.datamodule.val_dataset
+    #     }
+    #     index = 0
+    #     for split, dataset in split_data.items():
+    #         for image, label in zip(dataset.data, dataset.targets):
+    #             if index < 10:
+    #                 data_split_at.add(
+    #                     wandb.Image(image), 
+    #                     name=os.path.join(split, dataset.classes[label], f"{index}.jpg")
+    #                     )
+    #             preview_data_table.add_data(
+    #                 wandb.Image(image), 
+    #                 dataset.classes[label], 
+    #                 split)
+    #             index += 1
+    #     data_split_at.add(preview_data_table, 'data_split')
+    #     trainer.logger.experiment.log_artifact(data_split_at)
 
     def on_validation_end(self, trainer, pl_module):
         val_batch = next(iter(self.datamodule.val_dataloader()))
@@ -75,6 +76,8 @@ def main(cfg):
                       data_path=cfg.data.path,
                       download=cfg.data.download)
     data.prepare_dataset()
+    logger.info(f"Downloaded data was saved: {data.train_dataset.root}")
+
     
     if cfg.model.name == "teacher":
         model = TeacherTrainingModule(
@@ -96,7 +99,6 @@ def main(cfg):
                                    name="teacher_model")
 
         trainer = pl.Trainer(
-            default_root_dir=cfg.default_root_dir,
             max_epochs=cfg.training.max_epochs,
             logger=wandb_logger,
             gpus=1,
@@ -118,9 +120,13 @@ def main(cfg):
                 'best-checkpoint-teacher.ckpt'
                 )
         )
-        model = DistillTrainingModule(teacher_model, 
-                                      lr=cfg.training.lr,
-                                      num_classes=cfg.data.num_classes)
+        model = DistillTrainingModule(
+            teacher_model,
+            temperature=cfg.model.distill_model.temperature,
+            distillation_weight=cfg.model.distill_model.distillation_weight, 
+            lr=cfg.training.lr,
+            num_classes=cfg.data.num_classes
+            )
         checkpoint_callback = ModelCheckpoint(
             dirpath=cfg.training.checkpoint_folder,
             filename="best-checkpoint-distill",
@@ -136,7 +142,6 @@ def main(cfg):
                                    name="student model")
 
         trainer = pl.Trainer(
-            default_root_dir=cfg.default_root_dir,
             max_epochs=cfg.training.max_epochs,
             logger=wandb_logger,
             gpus=1,
